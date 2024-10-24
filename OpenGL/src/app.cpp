@@ -5,6 +5,24 @@
 #include <string>
 #include <sstream>
 
+#define ASSERT(x) if (!(x)) __debugbreak();
+#define GLCALL(x) GLClearError();\
+    x;\
+    ASSERT(GLLogCall(#x, __FILE__, __LINE__))
+
+static void GLClearError() {
+    while (glGetError()!= GL_NO_ERROR);
+}
+
+static bool GLLogCall(const char* function, const char* file, int line) {
+    while (GLenum error = glGetError()) {
+        std::cout << "[OpenGL error] (" << error << ")" <<function 
+           << " " << file << ": " << line << std::endl;
+        return false; 
+    }
+    return true; 
+}
+
 struct ShaderProgramSource {
     std::string VertexSource; 
     std::string FragmentSource; 
@@ -126,17 +144,22 @@ int main(void)
     
     // >> DATA FOR TRIANGLE
     // vertex POSITIONS, Vertexes have a lot more data in them(Color, position, normals etc..)
-    float positions[6] = {
-        -0.5f, -0.5,
-        0,  0.5f,
-        0.5f, -0.5f
+    float positions[] = {
+        -0.5f, -0.5f, //0
+         0.5f, -0.5f, //1
+         0.5f,  0.5f, //2
+        -0.5f,  0.5f, //3
+    };
+
+    unsigned int indices[] = {
+        0, 1, 2, 
+        2, 3, 0
     };
 
     unsigned int buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, 6*sizeof(float), positions, GL_STATIC_DRAW);
-
+    glBufferData(GL_ARRAY_BUFFER, 6*2*sizeof(float), positions, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     // First parameter, where we start to read
@@ -147,6 +170,12 @@ int main(void)
     // here it's 8 because we are only holding the information of the positon
     // Sixth parameter is offset of change of what information of the vertex is being accessed
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float),0);
+
+    // IBO >> INDEX BUFFER OBJECT
+    unsigned int ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
     // << DATA FOR TRIANGLE
 
     glUseProgram(shader); 
@@ -157,8 +186,9 @@ int main(void)
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
         
-        //Draw call, is blank because we don't have a shader implementation yet
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        GLClearError(); 
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
+        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));  
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
