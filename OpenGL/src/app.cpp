@@ -31,6 +31,7 @@ int main(void)
 
     
     // >> DATA FOR TRIANGLE
+    // vertex POSITIONS, Vertexes have a lot more data in them(Color, position, normals etc..)
     float positions[6] = {
         -0.5f, -0.5,
         0,  0.5f,
@@ -41,6 +42,17 @@ int main(void)
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     glBufferData(GL_ARRAY_BUFFER, 6*sizeof(float), positions, GL_STATIC_DRAW);
+
+
+    glEnableVertexAttribArray(0);
+    // First parameter, where we start to read
+    //Second parameter, dimensions of vector ex 2 for 2, 3 for 3D, 4 for RGBA
+    //Third parameter type of data to represent
+    //Fourth parameter if it should be normalized
+    //Fifth parameter is the size of all the information in 1 vertex, 
+    // here it's 8 because we are only holding the information of the positon
+    // Sixth parameter is offset of change of what information of the vertex is being accessed
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float),0);
     // << DATA FOR TRIANGLE
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
